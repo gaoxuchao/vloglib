@@ -1,12 +1,9 @@
 '''
    FileName: vloglib.py
-   Desc: This is python function to convert between Binary Code & Gray Code
+   Desc: This lib provide the functions to find the module ports in verilog file
    Author: frank gao
    Email: gao.xuchao@163.com
-   HomePage:
    Version: 0.0.1
-   LastChange: 2019-12-24 20:25:00
-   History:
 '''
 
 import re
