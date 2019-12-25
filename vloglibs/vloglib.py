@@ -62,28 +62,32 @@ def scanText(line, scanIO=True, scanParameter=True):
 
     inputPattern = re.compile(r"^\s*input")  # input之前有0个或多个空格
 
+    # 删除所有注释
+    lineWithoutComment = re.sub(r"[\\\\|\/\*].*", "", line)
+
     # 判断输入内容是否符合约束，即冒号和分号后不能有字符出现
-    if re.search(r"[\,\;]\s*\w+$", line) is not None:
-        raise Exception("Warning! characters appear after the end of the sentence")
+    if re.search(r"[;|,]\s*\w+\s*", lineWithoutComment) is not None:
+        raise Exception("Warning! characters appear after the end of the sentence :"+line)
 
     # io匹配使能为真且匹配到input关键字
-    if scanIO and (inputPattern.search(line) is not None):
+    if scanIO and (inputPattern.search(lineWithoutComment) is not None):
 
         # put后跟0个或多个空格，并且出现[
-        if re.search(r'put\s*\[', line) is not None:
-            # 提取位宽,[后跟着0个或多个空格，后跟着位宽减-1的数字或字符串,
-            # 后跟着0个或多个空格，后跟着一个\：
-            inputWidth = re.findall(r"\[\s*(\w+)\s*\:", line)
+        if re.search(r'put\s*\[', lineWithoutComment) is not None:
+            # 提取位宽,[]之间的所有字符
+            inputWidth = re.findall(r"\[.*\]", lineWithoutComment)[0]
+            # 去除空格
+            inputWidth = re.sub(r"\s", "", str(inputWidth))
 
             # 提取输入名称,]后面跟着0个或多个空格，然后是名称
             # 名称后跟着0个或多个空格，然后是分号或逗号
-            inputName = re.findall(r"\]\s*(\w+)\s*[\;\,]", line)
+            inputName = re.findall(r"\]\s*(\w+)\s*[\;\,]", lineWithoutComment)[0]
 
         else:
             inputWidth = 1  # 位宽为1
             # 提取名称,put后跟0个或多个空格，然后是名称
             # 名称后跟着0个或多个空格，然后是分号或逗号
-            inputName = re.findall(r"put\s*(\w+)\s*[\;\,]", line)
+            inputName = re.findall(r"put\s*(\w+)\s*[\;\,]", lineWithoutComment)[0]
 
         return 1, inputName, inputWidth
 
