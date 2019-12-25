@@ -61,13 +61,19 @@ def scanText(line, scanIO=True, scanParameter=True):
     '''
 
     inputPattern = re.compile(r"^\s*input")  # input之前有0个或多个空格
+    outputPattern = re.compile(r"^\s*output")  # output之前有0个或多个空格
+    inoutPattern = re.compile(r"^\s*inout")  # output之前有0个或多个空格
 
     # 删除所有注释
-    lineWithoutComment = re.sub(r"[\\\\|\/\*].*", "", line)
+    lineWithoutComment = re.sub(r"((?://)|(?:/\*)).*", "", line)
 
     # 判断输入内容是否符合约束，即冒号和分号后不能有字符出现
-    if re.search(r"[;|,]\s*\w+\s*", lineWithoutComment) is not None:
-        raise Exception("Warning! characters appear after the end of the sentence :"+line)
+    if re.search(r"[;,]\s*\w+\s*", lineWithoutComment) is not None:
+        # for循环是例外
+        if 'for' in lineWithoutComment:
+            pass
+        else:
+            raise Exception("Warning! characters appear after the end of the sentence :"+line)
 
     # io匹配使能为真且匹配到input关键字
     if scanIO and (inputPattern.search(lineWithoutComment) is not None):
@@ -90,6 +96,50 @@ def scanText(line, scanIO=True, scanParameter=True):
             inputName = re.findall(r"put\s*(\w+)\s*[\;\,]", lineWithoutComment)[0]
 
         return 1, inputName, inputWidth
+
+    # io匹配使能为真且匹配到output关键字
+    elif scanIO and (outputPattern.search(lineWithoutComment) is not None):
+
+        # put后跟0个或多个空格，并且出现[
+        if re.search(r'put\s*(?:reg)*\s*\[', lineWithoutComment) is not None:
+            # 提取位宽,[]之间的所有字符
+            outputWidth = re.findall(r"\[.*\]", lineWithoutComment)[0]
+            # 去除空格
+            outputWidth = re.sub(r"\s", "", str(outputWidth))
+
+            # 提取输入名称,]后面跟着0个或多个空格，然后是名称
+            # 名称后跟着0个或多个空格，然后是分号或逗号
+            outputName = re.findall(r"\]\s*(\w+)\s*[\;\,\n]", lineWithoutComment)[0]
+
+        else:
+            outputWidth = 1  # 位宽为1
+            # 提取名称,put后跟0个或多个空格，然后是名称
+            # 名称后跟着0个或多个空格，然后是分号或逗号
+            outputName = re.findall(r"put\s*(\w+)\s*[\;\,]", lineWithoutComment)[0]
+
+        return 2, outputName, outputWidth
+
+    # io匹配使能为真且匹配到inout关键字
+    elif scanIO and (inoutPattern.search(lineWithoutComment) is not None):
+
+        # out后跟0个或多个空格，并且出现[
+        if re.search(r'out*\s*\[', lineWithoutComment) is not None:
+            # 提取位宽,[]之间的所有字符
+            inoutWidth = re.findall(r"\[.*\]", lineWithoutComment)[0]
+            # 去除空格
+            inoutWidth = re.sub(r"\s", "", str(inoutWidth))
+
+            # 提取输入名称,]后面跟着0个或多个空格，然后是名称
+            # 名称后跟着0个或多个空格，然后是分号或逗号
+            inoutName = re.findall(r"\]\s*(\w+)\s*[\;\,]", lineWithoutComment)[0]
+
+        else:
+            inoutWidth = 1  # 位宽为1
+            # 提取名称,out后跟0个或多个空格，然后是名称
+            # 名称后跟着0个或多个空格，然后是分号或逗号
+            inoutName = re.findall(r"out\s*(\w+)\s*[\;\,]", lineWithoutComment)[0]
+
+        return 3, inoutName, inoutWidth
 
     else:  # 没有匹配到IO或Parameter
         return 0, None, None
